@@ -1,0 +1,35 @@
+[
+  {
+    "id": "email",
+    "label": "✉️ Email",
+    "command": "clipboard",
+    "args": ["me@domain.com"]
+  },
+  {
+    "id": "tableflip",
+    "label": "(╯°□°)╯︵ ┻━┻",
+    "command": "clipboard",
+    "args": ["(╯°□°)╯︵ ┻━┻"]
+  },
+  {
+    "id": "shrug",
+    "label": "¯\\_(ツ)_/¯",
+    "command": "clipboard",
+    "args": ["¯\\_(ツ)_/¯"]
+  },
+  {
+    "id": "markdown-link",
+    "label": "🔗 Markdown Link",
+    "command": "clipboard_filter",
+    "args": ["[](%s)", "echo \"%s\""]
+  },
+  {
+    "id": "save-to-clipboard",
+    "label": "Save to clipboard",
+    "help": "Save text from prompt in system clipboard. This can be useful to chain expansions.",
+    "command": "run",
+    "args": [
+      "(zenity --entry --title 'Copy to clipboard' --text 'Text to save:' | wl-copy) || true"
+    ]
+  }
+]

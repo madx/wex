@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+IFS=$'\n\t'
+
+WEX_CONFIG=$XDG_CONFIG_HOME/wex/wex.json
+WEX_CACHE=$XDG_CACHE_HOME/wex
+WEX_ERRORS=$XDG_RUNTIME_DIR/wex_error
+WEX_ICONS='{clipboard: "📋️", clipboard_filter: "🔀", run: "⚙️"}'
+
+read -r -d '' PRE_DISPLAY_CMD <<ENDJQ || true
+def geticon(command): command as \$command | ( ${WEX_ICONS} | .[\$command]);
+.[] | select(.id == "%s") | [
+  geticon(.command),
+  "<span color=\"gray\">|</span>",
+  .label,
+  if has("help") then
+    "<span color=\"gray\" size=\"smaller\">— \(.help)</span>"
+  else
+    null
+  end
+] | join(" ")
+ENDJQ
+
+wex_cmd_clipboard() {
+  wl-copy "$@"
+}
+
+wex_cmd_run() {
+  eval $*
+}
+
+wex_cmd_clipboard_filter() {
+  format=${1:-"%s"}
+  clipboard="$(wl-paste)"
+  declare -a replacements
+  replacements=()
+  for arg in ${@:2}; do
+    command=$(printf $arg "$clipboard")
+    replacements+=($(eval $command))
+  done
+  replaced=$(printf $format ${replacements[@]})
+  wl-copy "$replaced"
+}
+
+match=$(jq -r '.[] | .id' $WEX_CONFIG |\
+  wofi --dmenu \
+    --allow-markup \
+    --normal-window \
+    --matching fuzzy \
+    --insensitive \
+    --cache-file $WEX_CACHE \
+    --pre-display-cmd "jq -j '$PRE_DISPLAY_CMD' $WEX_CONFIG" \
+    --prompt wex)
+command=$(jq -r '.[] | select(.id == "'${match}'") | .command' $WEX_CONFIG)
+args=($(jq -r '.[] | select(.id == "'${match}'") | .args | join("\n")' $WEX_CONFIG))
+fn="wex_cmd_${command}"
+($fn ${args[@]} 2>${WEX_ERRORS}) || notify-send --app-name wex "Unable to run $fn ${args[@]}" "$(cat ${WEX_ERRORS})"
+
+
