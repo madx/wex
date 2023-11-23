@@ -7,22 +7,14 @@ XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
 WEX_CONFIG=$XDG_CONFIG_HOME/wex/wex.json
 XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
 WEX_CACHE=$XDG_CACHE_HOME/wex
+WEX_ENTRIES_CACHE=$XDG_CACHE_HOME/wex_entries
 WEX_ERRORS=$XDG_RUNTIME_DIR/wex_error
 WEX_ICONS='{clipboard: "📋️", clipboard_filter: "🔀", run: "⚙️"}'
 
-read -r -d '' PRE_DISPLAY_CMD <<ENDJQ || true
-def geticon(command): command as \$command | ( ${WEX_ICONS} | .[\$command]);
-.[] | select(.id == "%s") | [
-  geticon(.command),
-  "<span color=\"gray\">|</span>",
-  .label,
-  if has("help") then
-    "<span color=\"gray\" size=\"smaller\">— \(.help)</span>"
-  else
-    null
-  end
-] | join(" ")
-ENDJQ
+if [ ! -f $WEX_CONFIG ]; then
+  echo "No config found. Create one in $WEX_CONFIG."
+  exit 1
+fi
 
 wex_cmd_clipboard() {
   wl-copy "$@"
@@ -45,6 +37,40 @@ wex_cmd_clipboard_filter() {
   wl-copy "$replaced"
 }
 
+wex_build_entries() {
+  read -r -d '' BUILD_ENTRIES <<ENDJQ || true
+  def geticon(command): command as \$command | ( ${WEX_ICONS} | .[\$command]);
+  .[] | [
+    .id,
+    "\t",
+    geticon(.command),
+    " <span color=\"gray\">|</span> ",
+    .label,
+    if has("help") then
+      " <span color=\"gray\" size=\"smaller\">— \(.help)</span>"
+    else
+      null
+    end
+  ] | join("")
+ENDJQ
+  jq -r "$BUILD_ENTRIES" $WEX_CONFIG > $WEX_ENTRIES_CACHE
+}
+
+wex_show_entry() {
+  grep -E "^${1:-}	" $WEX_ENTRIES_CACHE | cut -f2- | tr -d "\n"
+}
+
+if [ ! -f $WEX_ENTRIES_CACHE ]; then
+  wex_build_entries
+elif [ $WEX_CONFIG -nt $WEX_ENTRIES_CACHE ]; then
+  wex_build_entries
+fi
+
+if [ "${1:-}" = "pre-display-cmd" ]; then
+  wex_show_entry "${2:-}"
+  exit 0
+fi
+
 match=$(jq -r '.[] | .id' $WEX_CONFIG |\
   wofi --dmenu \
     --allow-markup \
@@ -52,7 +78,7 @@ match=$(jq -r '.[] | .id' $WEX_CONFIG |\
     --matching fuzzy \
     --insensitive \
     --cache-file $WEX_CACHE \
-    --pre-display-cmd "jq -j '$PRE_DISPLAY_CMD' $WEX_CONFIG" \
+    --pre-display-cmd "$0 pre-display-cmd '%s'" \
     --prompt wex)
 command=$(jq -r '.[] | select(.id == "'${match}'") | .command' $WEX_CONFIG)
 args=($(jq -r '.[] | select(.id == "'${match}'") | .args | join("\n")' $WEX_CONFIG))
