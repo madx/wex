@@ -3,7 +3,9 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
 WEX_CONFIG=$XDG_CONFIG_HOME/wex/wex.json
+XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
 WEX_CACHE=$XDG_CACHE_HOME/wex
 WEX_ERRORS=$XDG_RUNTIME_DIR/wex_error
 WEX_ICONS='{clipboard: "📋️", clipboard_filter: "🔀", run: "⚙️"}'
