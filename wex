@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
+# Bash strict mode http://redsymbol.net/articles/unofficial-bash-strict-mode/
 set -euo pipefail
 IFS=$'\n\t'
 
+# Set defaults for XDG vars if needed
 XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
-WEX_CONFIG=$XDG_CONFIG_HOME/wex/wex.json
 XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
+
+WEX_CONFIG=$XDG_CONFIG_HOME/wex/wex.json
 WEX_CACHE=$XDG_CACHE_HOME/wex
 WEX_ENTRIES_CACHE=$XDG_CACHE_HOME/wex_entries
 WEX_ERRORS=$XDG_RUNTIME_DIR/wex_error
@@ -16,6 +19,7 @@ if [ ! -f $WEX_CONFIG ]; then
   exit 1
 fi
 
+# Available commands
 wex_cmd_clipboard() {
   wl-copy "$@"
 }
@@ -37,6 +41,7 @@ wex_cmd_clipboard_filter() {
   wl-copy "$replaced"
 }
 
+# Entry management
 wex_build_entries() {
   read -r -d '' BUILD_ENTRIES <<ENDJQ || true
   def geticon(command): command as \$command | ( ${WEX_ICONS} | .[\$command]);
@@ -71,6 +76,7 @@ if [ "${1:-}" = "pre-display-cmd" ]; then
   exit 0
 fi
 
+# Main
 match=$(jq -r '.[] | .id' $WEX_CONFIG |\
   wofi --dmenu \
     --allow-markup \
