@@ -12,7 +12,7 @@ WEX_CONFIG=$XDG_CONFIG_HOME/wex/wex.json
 WEX_CACHE=$XDG_CACHE_HOME/wex
 WEX_ENTRIES_CACHE=$XDG_CACHE_HOME/wex_entries
 WEX_ERRORS=$XDG_RUNTIME_DIR/wex_error
-WEX_ICONS='{clipboard: "📋️", clipboard_from_cmd: "📋️", clipboard_filter: "🔀", run: "⚙️"}'
+WEX_ICONS='{copy: "📋️", exec_copy: "📋️", clipboard_filter: "🔀", exec: "⚙️"}'
 
 if [ ! -f $WEX_CONFIG ]; then
   echo "No config found. Create one in $WEX_CONFIG."
@@ -20,16 +20,16 @@ if [ ! -f $WEX_CONFIG ]; then
 fi
 
 # Available commands
-wex_cmd_clipboard() {
+wex_cmd_copy() {
   wl-copy "$@"
 }
 
-wex_cmd_clipboard_from_cmd() {
+wex_cmd_exec_copy() {
   output=$(eval $@)
   wl-copy "$output"
 }
 
-wex_cmd_run() {
+wex_cmd_exec() {
   eval $*
 }
 
