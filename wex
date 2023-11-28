@@ -8,6 +8,7 @@ IFS=$'\n\t'
 XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
 XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
 
+WEX_VERSION=0.1.0
 WEX_CONFIG=$XDG_CONFIG_HOME/wex/wex.json
 WEX_CACHE=$XDG_CACHE_HOME/wex
 WEX_ENTRIES_CACHE=$XDG_CACHE_HOME/wex_entries
@@ -76,10 +77,16 @@ elif [ $WEX_CONFIG -nt $WEX_ENTRIES_CACHE ]; then
   wex_build_entries
 fi
 
-if [ "${1:-}" = "pre-display-cmd" ]; then
-  wex_show_entry "${2:-}"
-  exit 0
-fi
+case "${1:-}" in
+  pre-display-cmd)
+    wex_show_entry "${2:-}"
+    exit 0
+    ;;
+  -v|--version)
+    echo "wex $WEX_VERSION"
+    exit 0
+    ;;
+esac
 
 # Main
 match=$(jq -r '.[] | .id' $WEX_CONFIG |\
